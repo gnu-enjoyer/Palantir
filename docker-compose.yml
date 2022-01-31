@@ -1,0 +1,11 @@
+version: "3.7"
+
+services:
+    palantir:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile
+        container_name: palantir
+        restart: unless-stopped
+        env_file:
+            - .env
