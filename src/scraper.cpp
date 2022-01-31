@@ -84,6 +84,8 @@ bool Scraper::gougXML(std::string& in) {
     const size_t npos = std::string::npos;
 
     nlohmann::json j_obj;
+    nlohmann::json j_array = nlohmann::json::array();
+
     std::string buff;
     std::string ex_buff;
 
@@ -104,8 +106,6 @@ bool Scraper::gougXML(std::string& in) {
 
                 start:
                 if (pos = buff.find(e, ++offset); pos != npos) {
-                    //vectorPairs.emplace_back(e, pos); // debug/testin only
-                    ex_buff = "{";
 
                     for (--pos; pos < buff.size(); ++pos)
                     {
@@ -115,8 +115,7 @@ bool Scraper::gougXML(std::string& in) {
                         ex_buff.push_back(buff.at(pos));
                     }
 
-                    ex_buff.append("}");
-                    j_obj.emplace_back(ex_buff);
+                    j_array.push_back(ex_buff);
 
                     offset = pos;
                     goto start;
@@ -126,6 +125,7 @@ bool Scraper::gougXML(std::string& in) {
         }
     }
 
+    j_obj.push_back(j_array);
     in = j_obj.dump();
     return true;
 
