@@ -24,6 +24,7 @@ add_executable(Palantir
 
 if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+    set(HIREDIS_FROM_INTERNET "ON")
 
     find_package(PkgConfig REQUIRED)
     find_package(OpenSSL REQUIRED)
@@ -47,5 +48,14 @@ if(UNIX)
             pugixml
             fmt
             )
+
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/palantir.cfg
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+    enable_testing ()
+    add_subdirectory (tests)
+
+    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/palantir.cfg
+            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/tests/)
 
 endif()

@@ -7,11 +7,18 @@
 
 Dispatcher::Dispatcher() {
 
-    auto socket  = UNIX_SOCKET(pairPtr);
+    if(Logger::get().loadConfig())
+        pCfg = Logger::get().Cfg();
+
+    auto socket  = UNIX_SOCKET(pCfg->ipc_path.c_str(),
+                               pairPtr);
     socketPtr = &socket;  //no return no problem
 
-    pRedis = redisConnect("127.0.0.1", 6379);
+    pRedis = redisConnect(pCfg->redis_ip.c_str(),
+                          pCfg->redis_port);
+
     if(!checkRedis()) return;
+
     Logger::get().write("[Redis] Initialised OK.");
 
     initSocket();
@@ -20,7 +27,10 @@ Dispatcher::Dispatcher() {
 }
 
 Dispatcher::~Dispatcher() {
-    redisFree(pRedis);
+
+    if(pRedis)
+        redisFree(pRedis);
+
 }
 
 bool Dispatcher::initSocket() {

@@ -4,14 +4,21 @@
 #include <chrono>
 #include <unistd.h>
 
-UNIX_SOCKET::UNIX_SOCKET(qPtr& in) {
+UNIX_SOCKET::UNIX_SOCKET(const char* fd, qPtr& in) {
 
     queuePtr = in;
     int keepalive = 1;
 
+    sockaddr_un soc_serv{
+        AF_UNIX,
+        "/tmp/palantir"
+    };
+
+    strcpy(soc_serv.sun_path, fd);
+
     try{
-        unlink(PATH);
-        bind(local_fd, &soc_serv, sizeof soc_serv);
+        unlink(fd);
+        bind(local_fd, (sockaddr*)&soc_serv, sizeof soc_serv);
         listen(local_fd, 1);
         setsockopt(local_fd, SOL_SOCKET,
                               SO_KEEPALIVE, &keepalive, sizeof(keepalive));

@@ -11,6 +11,7 @@ class Dispatcher {
     mutexQueue<E::dataPacketOut> outQ;
     qPtr pairPtr{&inQ, &outQ};
 
+    E::configFile *pCfg;
     UNIX_SOCKET *socketPtr;
     redisContext *pRedis;
 

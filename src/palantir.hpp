@@ -64,6 +64,17 @@ namespace E {
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(dataPacketOut, data, status, expac)
 
 
+    struct configFile {
+
+        std::string ipc_path = "/tmp/palantir";
+        std::string redis_ip = "127.0.0.1";
+        int redis_port = 6379;
+
+    };
+
+    NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(configFile, ipc_path, redis_ip, redis_port)
+
+
 }
 
 class Logger {
@@ -80,11 +91,13 @@ class Logger {
     std::ofstream *logfile = new std::ofstream("log.txt",
                                                std::fstream::app);
 
+    E::configFile configfile;
+
 public:
 
     static Logger &get() {
         static Logger instance;
-        // volatile int dummy{};
+        //volatile int dummy{};
         return instance;
     }
 
@@ -94,6 +107,25 @@ public:
                                 std::chrono::system_clock::now());
 
         err ? *logfile << " [ERROR] " << in << std::endl : *logfile << " [INFO] " << in << std::endl;
+    }
+
+    bool loadConfig() {
+        try{
+            std::ifstream i("palantir.cfg");
+            nlohmann::json j;
+            i >> j;
+            configfile = j.get<E::configFile>();
+        }catch(...){
+            write("[Config] Couldn't load palantir.cfg, using defaults.", true);
+            std::cout << "heck";
+            return false;
+        }
+
+        return true;
+    };
+
+    E::configFile* Cfg(){
+       return &configfile;
     }
 
 };

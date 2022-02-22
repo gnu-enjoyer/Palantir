@@ -7,16 +7,10 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 
-#define PATH "/tmp/dbg2"
-
 class UNIX_SOCKET {
 
     int local_fd = socket(AF_UNIX,
                           SOCK_STREAM, 0);
-
-    const sockaddr soc_serv = {AF_UNIX,
-                               PATH};
-
     int remote_fd;
     qPtr queuePtr;
 
@@ -28,7 +22,7 @@ public:
 
     [[noreturn]] void networkSend();
 
-    explicit UNIX_SOCKET(qPtr &in);
+    explicit UNIX_SOCKET(const char* fd, qPtr &in);
 
     ~UNIX_SOCKET();
 
