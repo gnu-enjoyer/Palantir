@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v2
     
     - name: Grab deps
-      run: sudo apt-get update &&  sudo apt-get install -y libhiredis-dev g++-11 && sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 99
+      run: sudo apt-get update &&  sudo apt-get install -y redis-server g++-11 && sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 99
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
@@ -30,7 +30,11 @@ jobs:
 
     - name: Build
       # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}      
+      
+    - name: Redis
+      # Starts a dummy Redis server for CTest to check Palantir <-> Redis
+      run: redis-server &
 
     - name: Test
       working-directory: ${{github.workspace}}/build
