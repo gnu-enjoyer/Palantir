@@ -12,7 +12,7 @@ bool testRedis(const char* ip, int port){
     //check we have a local connection to Redis on the expected port
     auto result = redisConnect(ip, port);
 
-    if (result == NULL || result->err)
+    if (result == nullptr || result->err)
         return false;
     else
         return true;
@@ -29,9 +29,10 @@ bool testHTTPS(){
     };
 
     auto scraper = Scraper(testPacket);
-    auto output = scraper.Scrape();
 
-    if(output.status != E::E_JSON_MESSAGE::E_NOT_FOUND) return true;
+    if(auto output = scraper.Scrape();
+    output.status != E::E_JSON_MESSAGE::E_NOT_FOUND)
+        return true;
 
     return false;
 
@@ -48,9 +49,8 @@ bool testJSON(){
 
     nlohmann::json j = p1;
 
-    auto p2 = j.get<E::dataPacketIn>();
-
-    if(p1.id != p2.id) return false;
+    if(auto p2 = j.get<E::dataPacketIn>(); p1.id != p2.id)
+        return false;
 
     return true;
 
@@ -59,7 +59,7 @@ bool testJSON(){
 bool testCfg(){
 
     //check the cfg file loads ok
-    E::configFile *pCfg;
+    E::configFile const *pCfg;
 
     if(Logger::get().loadConfig()) {
         pCfg = Logger::get().Cfg();
@@ -84,18 +84,18 @@ int main(int argc, char* argv[]) {
     return result;
 }
 
-TEST_CASE("Testing JSON + Cfg...") {
+TEST_CASE("JSON+Config") {
     REQUIRE(testJSON() == true);
     REQUIRE(testCfg() == true);
 }
 
-TEST_CASE("Testing external HTTPS...") {
+TEST_CASE("External HTTPS") {
     REQUIRE(testHTTPS() == true);
 }
 
-TEST_CASE("Testing Redis...") {
+TEST_CASE("Redis") {
 
-    if(Logger::get().loadConfig(); E::configFile *pCfg = Logger::get().Cfg()){
+    if(Logger::get().loadConfig(); E::configFile const *pCfg = Logger::get().Cfg()){
         REQUIRE(testRedis(pCfg->redis_ip.c_str(),
                           pCfg->redis_port) == true);
     }

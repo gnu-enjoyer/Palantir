@@ -29,5 +29,10 @@ target_link_libraries(PalanTest
         HIREDIS::HIREDIS
         pugixml
         fmt
-        Catch2::Catch2WithMain
+        Catch2::Catch2
         )
+
+list(APPEND CMAKE_MODULE_PATH ${catch2_SOURCE_DIR}/extras)
+include (CTest)
+include (Catch)
+catch_discover_tests(PalanTest)
