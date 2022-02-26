@@ -1,7 +1,7 @@
 #ifndef PALANTIR_DISPATCHER_H
 #define PALANTIR_DISPATCHER_H
 
-#include <hiredis/hiredis.h>
+#include "hiredis.h"
 #include "palantir.hpp"
 #include "net.h"
 
@@ -12,6 +12,8 @@ class Dispatcher {
     qPtr pairPtr{&inQ, &outQ};
 
     E::configFile *pCfg;
+    E::configFile defaultCfg;
+
     UNIX_SOCKET *socketPtr;
     redisContext *pRedis;
 

@@ -7,8 +7,7 @@
 
 Dispatcher::Dispatcher() {
 
-    if(Logger::get().loadConfig())
-        pCfg = Logger::get().Cfg();
+    Logger::get().loadConfig() ? pCfg = Logger::get().Cfg() : pCfg = &defaultCfg;
 
     auto socket  = UNIX_SOCKET(pCfg->ipc_path.c_str(),
                                pairPtr);

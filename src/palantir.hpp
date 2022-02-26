@@ -110,6 +110,9 @@ public:
     }
 
     bool loadConfig() {
+
+        if(!std::filesystem::exists("palantir.cfg")) return false;
+
         try{
             std::ifstream i("palantir.cfg");
             nlohmann::json j;
@@ -117,7 +120,6 @@ public:
             configfile = j.get<E::configFile>();
         }catch(...){
             write("[Config] Couldn't load palantir.cfg, using defaults.", true);
-            std::cout << "heck";
             return false;
         }
 

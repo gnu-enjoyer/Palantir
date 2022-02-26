@@ -1,4 +1,6 @@
 build/
+deps/
+
 # Prerequisites
 *.d
 
@@ -31,3 +33,6 @@ build/
 *.exe
 *.out
 *.app
+
+# CMake
+/cmake-build-debug/

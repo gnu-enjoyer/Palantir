@@ -24,30 +24,59 @@ add_executable(Palantir
 
 if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-    set(HIREDIS_FROM_INTERNET "ON")
 
+    include(FetchContent)
     find_package(PkgConfig REQUIRED)
     find_package(OpenSSL REQUIRED)
-    find_package(hiredis 0.13.3 REQUIRED)
 
-    add_subdirectory(${PROJECT_SOURCE_DIR}/deps/zlib-1.2.11)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/deps/pugixml-1.11)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/deps/fmt-8.1.0)
-
-    target_include_directories(${PROJECT_NAME} PRIVATE
-            ${PROJECT_SOURCE_DIR}/deps/zlib-1.2.11
-            ${PROJECT_SOURCE_DIR}/deps/hiredis-1.0.2
-            ${PROJECT_SOURCE_DIR}/deps/pugixml-1.11/src
-            ${PROJECT_SOURCE_DIR}/deps/fmt-8.1.0/include
-            )
-
-    target_link_libraries(${PROJECT_NAME}
-            OpenSSL::SSL OpenSSL::Crypto
+    FetchContent_Declare(
             zlib
-            HIREDIS::HIREDIS
+            GIT_REPOSITORY https://github.com/madler/zlib.git
+            GIT_TAG cacf7f1d4e3d44d871b605da3b647f07d718623f
+    )
+
+    FetchContent_Declare(
+            hiredis
+            GIT_REPOSITORY  https://github.com/redis/hiredis.git
+            GIT_TAG f347743b7ded3bc7768c36126257bf3ae8c4e045
+    )
+
+    FetchContent_Declare(
+            fmt
+            GIT_REPOSITORY  https://github.com/fmtlib/fmt.git
+            GIT_TAG b6f4ceaed0a0a24ccf575fab6c56dd50ccf6f1a9
+    )
+
+    FetchContent_Declare(
+        pugixml
+        GIT_REPOSITORY  https://github.com/zeux/pugixml.git
+        GIT_TAG dd50fa5b45ab8d58d6c27566c2eaf04a8b7e5841
+    )
+
+    FetchContent_MakeAvailable(
+            zlib
+            hiredis
+            fmt
+            pugixml
+    )
+
+    add_library(PalantirLib
+                INTERFACE)
+
+    target_link_libraries(PalantirLib
+            INTERFACE
+            OpenSSL::SSL OpenSSL::Crypto
+            libz.a
+            hiredis_static
             pugixml
             fmt
             )
+
+    target_link_libraries(
+            Palantir
+            PalantirLib
+            )
+
 
     file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/palantir.cfg
             DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
