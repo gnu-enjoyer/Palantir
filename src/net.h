@@ -1,32 +1,25 @@
-#ifndef PALANTIR_SOCKET_H
-#define PALANTIR_SOCKET_H
+#ifndef PALANTIR_NET_H
+#define PALANTIR_NET_H
 
+#include <memory>
+#include <sys/socket.h>
 #include "palantir.hpp"
 
-#include <vector>
-#include <sys/socket.h>
-#include <sys/un.h>
-
-class UNIX_SOCKET {
+class Socket {
 
     int local_fd = socket(AF_UNIX,
                           SOCK_STREAM, 0);
-    int remote_fd;
-    qPtr queuePtr;
+    int remote_fd = 0;
 
-    inline void sendJSON(E::E_JSON_MESSAGE e, E::dataPacketOut *pPtr = nullptr) const;
+    void SendJSON(const Palantir::dataPacketOut& Data);
 
 public:
+    [[noreturn]] void Poll(std::shared_ptr<Palantir::IPCQueue> SharedPtr);
 
-    [[noreturn]] void networkPoll();
+    explicit Socket(const char* fd);
 
-    [[noreturn]] void networkSend();
-
-    explicit UNIX_SOCKET(const char* fd, qPtr &in);
-
-    ~UNIX_SOCKET();
-
-
+    ~Socket();
 };
 
-#endif //PALANTIR_SOCKET_H
+
+#endif //PALANTIR_NET_H

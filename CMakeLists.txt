@@ -1,32 +1,35 @@
 cmake_minimum_required(VERSION 3.16)
+
 project(Palantir)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++20")
-
-include_directories(${PROJECT_SOURCE_DIR}/include)
-
 add_executable(Palantir
-        src/net.cpp
-        src/scraper.cpp
+        src/palantir.hpp
+        src/cache.cpp
         src/dispatcher.cpp
-        src/main.cpp
-        )
+        src/scraper.cpp
+        src/net.cpp
+        src/main.cpp)
+
+target_include_directories(Palantir
+        PRIVATE
+        include)
 
 if(UNIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 
     include(FetchContent)
+
     find_package(PkgConfig REQUIRED)
+
     find_package(OpenSSL REQUIRED)
 
     FetchContent_Declare(
@@ -38,7 +41,7 @@ if(UNIX)
     FetchContent_Declare(
             hiredis
             GIT_REPOSITORY  https://github.com/redis/hiredis.git
-            GIT_TAG f347743b7ded3bc7768c36126257bf3ae8c4e045
+            GIT_TAG 8a15f4d6578560f2a375c32fc567c4c88335c2a8
     )
 
     FetchContent_Declare(
@@ -48,9 +51,9 @@ if(UNIX)
     )
 
     FetchContent_Declare(
-        pugixml
-        GIT_REPOSITORY  https://github.com/zeux/pugixml.git
-        GIT_TAG dd50fa5b45ab8d58d6c27566c2eaf04a8b7e5841
+            pugixml
+            GIT_REPOSITORY  https://github.com/zeux/pugixml.git
+            GIT_TAG dd50fa5b45ab8d58d6c27566c2eaf04a8b7e5841
     )
 
     FetchContent_MakeAvailable(
@@ -61,7 +64,7 @@ if(UNIX)
     )
 
     add_library(PalantirLib
-                INTERFACE)
+            INTERFACE)
 
     target_link_libraries(PalantirLib
             INTERFACE
@@ -75,16 +78,8 @@ if(UNIX)
     target_link_libraries(
             Palantir
             PalantirLib
-            )
-
-
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/palantir.cfg
-            DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-
-    enable_testing ()
-    add_subdirectory (tests)
-
-    file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/palantir.cfg
-            DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/tests/)
-
+    )
 endif()
+
+enable_testing ()
+add_subdirectory (tests)

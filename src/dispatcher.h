@@ -1,38 +1,27 @@
 #ifndef PALANTIR_DISPATCHER_H
 #define PALANTIR_DISPATCHER_H
 
-#include "hiredis.h"
+#include <memory>
 #include "palantir.hpp"
-#include "net.h"
 
 class Dispatcher {
 
-    mutexQueue<E::dataPacketIn> inQ;
-    mutexQueue<E::dataPacketOut> outQ;
-    qPtr pairPtr{&inQ, &outQ};
+    Palantir::Config Config;
 
-    E::configFile *pCfg;
-    E::configFile defaultCfg;
+    std::shared_ptr<Palantir::IPCQueue> QueuePtr;
 
-    UNIX_SOCKET *socketPtr;
-    redisContext *pRedis;
+    std::unique_ptr<class Socket> SocketPtr;
 
-    bool initSocket();
+    std::unique_ptr<class Cache> CachePtr;
 
-    bool queryRedis(int in, E::E_EXPANSION e, std::string &value);
-
-    bool writeRedis(int in, const std::string *sPtr, const E::E_EXPANSION e);
+    [[noreturn]] void Poll();
 
 public:
-
-    inline bool checkRedis();
-
-    [[noreturn]] void processQueue();
+    void Start(bool blocking=true);
 
     Dispatcher();
 
     ~Dispatcher();
-
 };
 
 

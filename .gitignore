@@ -1,5 +1,10 @@
+# Artefacts
 build/
 deps/
+
+# IDEs
+.vscode/
+.idea/
 
 # Prerequisites
 *.d

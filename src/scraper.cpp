@@ -1,132 +1,57 @@
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#define CPPHTTPLIB_ZLIB_SUPPORT
+#define CPPHTTPLIB_THREAD_POOL_COUNT 1
+
 #include "scraper.h"
-#include "fmt/format.h"
+
+#include <memory>
+#include <utility>
+#include "httplib.h"
+#include "pugixml.hpp"
 #include "magic_enum.hpp"
 
+static constexpr std::string BuildURL(Palantir::E_EXPANSION Enum){
+
+    return "https://" + std::string(magic_enum::enum_name(Enum)) + ".wowhead.com";
+}
+
+static httplib::Headers headers
+        {
+                {"User-Agent",      "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0"},
+                {"Accept-Encoding", "gzip"},
+                {"Keep-Alive",      "0"}
+        };
+
 Scraper::~Scraper() {
-    fmt::print("[Scraper] Exit. \n");
 }
 
-Scraper::Scraper(E::dataPacketIn &inPacket) {
-    inPtr = &inPacket;
-    //vectorPairs.reserve(5);
+Scraper::Scraper(const Palantir::dataPacketIn &inPacket, std::shared_ptr<Palantir::IPCQueue> Ptr)
+: sharedPtr(std::move(Ptr))
+{
+    std::string path = "/item=" + std::to_string(inPacket.id) + "&xml";
+
+    httplib::Client client(BuildURL(inPacket.expac));
+
+    auto res = client.Get(path.c_str());
+
+    res->status == 200 ? ParseXML(res->body) : SendError();
 }
 
-E::dataPacketOut Scraper::Scrape() {
+void Scraper::ParseXML(const std::string& str) {
 
-    assert(this->inPtr);
+    pugi::xml_parse_result res = pugi::xml_document{}.load_string(str.c_str());
 
-    E::dataPacketOut outP;
-    outP.expac = inPtr->expac;
-
-    switch(inPtr->expac){
-
-        default: {
-            Logger::get().write("[Scraper] Internal error", true);
-            return outP;
-        }
-
-        case E::E_EXPANSION::CLASSIC:
-        {
-            httplib::Client cli = httplib::Client("https://classic.wowhead.com");
-            getXML(&cli, inPtr->id, outP.data);
-            break;
-        }
-
-        case E::E_EXPANSION::TBC:
-        {
-            httplib::Client cli = httplib::Client("https://tbc.wowhead.com");
-            getXML(&cli, inPtr->id, outP.data);
-            break;
-        }
-
-    }
-
-    outP.data.empty() ?  outP.status = E::E_JSON_MESSAGE::E_NOT_FOUND : outP.status = E::E_JSON_MESSAGE::E_FOUND;
-
-    if(!outP.data.empty())
-        gougXML(outP.data);
-
-    fmt::print("[Scraper] Completed. \n");
-    return outP;
-}
-
-bool Scraper::getXML(httplib::Client *httpPtr, int id, std::string& xml) {
-
-    httpPtr->set_decompress(true);
-    httpPtr->set_follow_location(true);
-    httpPtr->set_default_headers(headers);
-
-    std::string path = "/item=" + fmt::format_int(id).str() + "&xml";
-
-    auto res = httpPtr->Get(path.c_str(), headers);
-
-    if(res->status != 200) {
-        Logger::get().write("[Scraper] HTTP Error.", true);
-        return false;
-    }
-
-    if(res->body.find("<erro") != std::string::npos) {
-        Logger::get().write("[Scraper] HTTP OK, but item not found.", false);
-        return false;
-    }
-
-    xml = res->body;
-    return true;
-
-}
-
-bool Scraper::gougXML(std::string& in) {
-
-    pugi::xml_parse_result result = doc.load_string(in.c_str());
-
-    if (result.status != pugi::status_ok) return false;
-
-    const size_t npos = std::string::npos;
-
-    nlohmann::json j_obj;
-    nlohmann::json j_array = nlohmann::json::array();
-
-    std::string buff;
-    std::string ex_buff;
-
-    for (auto &n: nodes) {
-
-        if (n != nodes[2]) {
-            buff = "{";
-            buff.append(doc.select_nodes(n).first().node().text().as_string());
-            buff.append("}");
-            j_obj.emplace_back(nlohmann::json::parse(buff));
-        } else {
-            buff = doc.select_nodes(n).first().node().text().as_string();
-
-            size_t pos;
-            size_t offset = 0;
-
-            for (auto &e: extra) {
-
-                start:
-                if (pos = buff.find(e, ++offset); pos != npos) {
-
-                    for (--pos; pos < buff.size(); ++pos)
-                    {
-                        if (buff.at(pos) == '<' && buff.at(++pos) == '/')
-                            break;
-
-                        ex_buff.push_back(buff.at(pos));
-                    }
-
-                    j_array.push_back(ex_buff);
-
-                    offset = pos;
-                    goto start;
-
-                }
+    res.status == pugi::status_ok ? sharedPtr->Out.push(
+            Palantir::dataPacketOut{
+                "TODO: IMPLEMENT"
             }
-        }
-    }
+    ) : SendError();
+}
 
-    j_obj.push_back(j_array);
-    in = j_obj.dump();
-    return true;
+void Scraper::SendError() {
 
+    sharedPtr->Out.push(
+            Palantir::dataPacketOut{"ERROR"}
+    );
+    //Log error
 }

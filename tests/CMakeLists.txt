@@ -9,6 +9,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(PalanTest
+        ../src/cache.cpp
         ../src/net.cpp
         ../src/scraper.cpp
         ../src/dispatcher.cpp
@@ -18,6 +19,7 @@ add_executable(PalanTest
 target_include_directories(PalanTest
         PRIVATE
         ../src/
+        ../include/
         )
 
 target_link_libraries(PalanTest

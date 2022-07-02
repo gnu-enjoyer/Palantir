@@ -1,78 +1,25 @@
-#include <iostream>
 
-#include "dispatcher.h"
+#include "cache.h"
+#include "net.h"
 #include "scraper.h"
 #include "palantir.hpp"
 
 #include <catch2/catch_session.hpp>
 #include <catch2/catch_test_macros.hpp>
 
-bool testRedis(const char* ip, int port){
+bool testSocket(const std::string& str){
 
-    //check we have a local connection to Redis on the expected port
-    auto result = redisConnect(ip, port);
-
-    if (result == nullptr || result->err)
-        return false;
-    else
-        return true;
-
-}
-
-bool testHTTPS(){
-
-    //check https works (i.e. openssl) and firewall issues
-    E::dataPacketIn testPacket{
-            19019,
-            E::E_INPUT::E_PING,
-            E::E_EXPANSION::TBC
-    };
-
-    auto scraper = Scraper(testPacket);
-
-    if(auto output = scraper.Scrape();
-    output.status != E::E_JSON_MESSAGE::E_NOT_FOUND)
-        return true;
-
-    return false;
-
-}
-
-bool testJSON(){
-
-    //check data serialises properly via macros from palantir.hpp
-    E::dataPacketIn p1{
-            19019,
-            E::E_INPUT::E_QUERY,
-            E::E_EXPANSION::TBC
-    };
-
-    nlohmann::json j = p1;
-
-    if(auto p2 = j.get<E::dataPacketIn>(); p1.id != p2.id)
-        return false;
+    std::make_unique<Socket>(str.c_str());
 
     return true;
-
 }
 
-bool testCfg(){
 
-    //check the cfg file loads ok
-    E::configFile const *pCfg;
+bool testRedis(const std::string& IP, int Port){
 
-    if(Logger::get().loadConfig()) {
-        pCfg = Logger::get().Cfg();
+    auto cache = Cache(IP, Port);
 
-        std::cout << "IPC file descriptor: " << pCfg->ipc_path << "\n";
-        std::cout << "Redis IP: " << pCfg->redis_ip << "\n";
-        std::cout << "Redis Port: " << pCfg->redis_port << std::endl;
-
-        return true;
-    }
-
-    return false;
-
+    return true;
 }
 
 int main(int argc, char* argv[]) {
@@ -84,22 +31,48 @@ int main(int argc, char* argv[]) {
     return result;
 }
 
-TEST_CASE("JSON+Config") {
-    REQUIRE(testJSON() == true);
-    REQUIRE(testCfg() == true);
+TEST_CASE("Packets: JSON Parse") {
+
+    auto testpacketIn = Palantir::dataPacketIn{19019};
+
+    nlohmann::json j_obj = testpacketIn;
+
+    REQUIRE(testpacketIn.id == 19019);
+
+    REQUIRE(testpacketIn.expac == Palantir::E_EXPANSION::CLASSIC);
+
+    REQUIRE(testpacketIn.type == Palantir::E_INPUT::PING);
 }
 
-TEST_CASE("External HTTPS") {
-    REQUIRE(testHTTPS() == true);
+TEST_CASE("Config: Redis") {
+
+    Palantir::Config CfgTest;
+
+    CfgTest.LoadConfig();
+
+    auto Cfg = CfgTest.GetConfig();
+
+    REQUIRE(testRedis(Cfg->redis_ip, Cfg->redis_port) == true);
+
+    REQUIRE(testSocket(Cfg->ipc_path) == true);
 }
 
-TEST_CASE("Redis") {
+TEST_CASE("Config: UNIX Socket") {
 
-    if(Logger::get().loadConfig(); E::configFile const *pCfg = Logger::get().Cfg()){
-        REQUIRE(testRedis(pCfg->redis_ip.c_str(),
-                          pCfg->redis_port) == true);
-    }
-    else
-        REQUIRE(testRedis("127.0.0.1", 6379) == true);
+    Palantir::Config CfgTest;
 
+    CfgTest.LoadConfig();
+
+    auto Cfg = CfgTest.GetConfig();
+
+    REQUIRE(testSocket(Cfg->ipc_path) == true);
+}
+
+TEST_CASE("Scraper: HTTPS") {
+
+    auto QueuePtr = std::make_shared<Palantir::IPCQueue>();
+
+    auto S = Scraper(
+            Palantir::dataPacketIn{19019}, QueuePtr
+            );
 }
