@@ -54,6 +54,10 @@ void Dispatcher::Start(bool blocking) {
                 Scraper(in.value(), QueuePtr);
         }
 
+        /* Send loop */
+        if(auto in = QueuePtr->Out.pop())
+            SocketPtr->SendJSON(in.value());
+
         std::this_thread::sleep_for(std::chrono::milliseconds (100));
     }
 }

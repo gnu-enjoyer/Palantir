@@ -3,7 +3,7 @@ FROM debian:bullseye AS base-image
 RUN apt-get update
 RUN useradd --system --create-home palantir
 
-FROM gcc:11.2.0-bullseye as compile-image
+FROM gcc:12.1.0-bullseye as compile-image
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends cmake pkg-config libssl-dev libhiredis-dev
 RUN useradd --system --create-home palantir

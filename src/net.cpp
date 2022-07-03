@@ -54,11 +54,8 @@ void Socket::Poll(std::shared_ptr<Palantir::IPCQueue> SharedPtr) {
         remote_fd = accept(local_fd,
                            nullptr, nullptr);
 
-        if (remote_fd != -1) {
-            SendJSON(Palantir::dataPacketOut{"WELCOME ACK", Palantir::E_JSON_MESSAGE::WELCOME});
-
-            recv_loop:
-
+        while(remote_fd != -1)
+        {
             bzero(ibuff, sizeof(ibuff));
 
             incoming = recv(remote_fd,
@@ -71,13 +68,11 @@ void Socket::Poll(std::shared_ptr<Palantir::IPCQueue> SharedPtr) {
                 } catch (...) { SendJSON(Palantir::dataPacketOut{}); }
             }
 
-            /* Send Loop */
-            if (SharedPtr->Out.size() != 0)
-                SendJSON(SharedPtr->Out.pop().value());
+            if(incoming == 0)
+                Poll(std::move(SharedPtr));
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
-            goto recv_loop;
         }
+
     }
 }

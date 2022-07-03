@@ -11,9 +11,9 @@ class Socket {
                           SOCK_STREAM, 0);
     int remote_fd = 0;
 
+public:
     void SendJSON(const Palantir::dataPacketOut& Data);
 
-public:
     [[noreturn]] void Poll(std::shared_ptr<Palantir::IPCQueue> SharedPtr);
 
     explicit Socket(const char* fd);

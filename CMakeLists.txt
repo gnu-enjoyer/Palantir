@@ -3,8 +3,11 @@ cmake_minimum_required(VERSION 3.16)
 project(Palantir)
 
 set(CMAKE_CXX_STANDARD 23)
+
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g")
+
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -82,4 +85,5 @@ if(UNIX)
 endif()
 
 enable_testing ()
+
 add_subdirectory (tests)

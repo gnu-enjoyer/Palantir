@@ -16,7 +16,7 @@ example:
 
 requirements: 
 
-g++11 
+g++12 
 
 bundled deps: 
 
