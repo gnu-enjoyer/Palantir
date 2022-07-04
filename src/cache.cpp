@@ -22,34 +22,44 @@ static constexpr std::string RedisQuery(bool query, Palantir::E_EXPANSION Enum,
 
 Cache::Cache(const std::string& IP, int Port) {
 
-    RedisPtr = redisConnect(IP.c_str(), Port);
+    redisPtr = redisConnect(IP.c_str(), Port);
 
-    if(!RedisPtr || RedisPtr->err != 0) throw std::runtime_error("Redis could not connect");
+    if(!redisPtr || redisPtr->err != 0) throw std::runtime_error("Redis could not connect");
+
+    redisSharedPtr = std::make_shared<class redisContext>(*redisPtr);
 }
 
 Cache::~Cache() {
 
-    redisFree(RedisPtr);
+    redisFree(redisPtr);
 }
 
-bool Cache::Interact(int i, Palantir::E_EXPANSION Enum, std::string &str, bool query) {
+std::optional<std::string> Cache::Interact(const Palantir::dataPacketIn &In, bool query) {
+
+    redisQuery g{redisSharedPtr, In};
+
+    return g.Process(query) ? g.buffer : std::optional<std::string>();
+}
+
+
+Cache::redisQuery::~redisQuery() {
+    freeReplyObject(reply);
+}
+
+bool Cache::redisQuery::Process(bool query) {
 
     bool result = false;
 
-    redisReply* reply;
-
     if(reply = static_cast<redisReply*>(redisCommand(
-            RedisPtr,
-            RedisQuery(query, Enum, std::to_string(i), &str).c_str()
-    )); reply != nullptr){
+                parentRedisContext.lock().get(),
+                RedisQuery(query, in.expac, std::to_string(in.id), &buffer).c_str()
+        )); reply != nullptr){
 
         if(reply->type == REDIS_REPLY_STRING && reply->type != REDIS_REPLY_ERROR) {
-            str = reply->str;
+            buffer = reply->str;
             result = true;
         }
     }
-
-    freeReplyObject(reply);
 
     return result;
 }

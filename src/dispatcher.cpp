@@ -45,14 +45,10 @@ void Dispatcher::Start(bool blocking) {
     for(;;)
     {
         if(auto in = QueuePtr->In.pop())
-        {
-            std::string buff;
-
-            if(CachePtr->Interact(in->id, in->expac,buff))
-                QueuePtr->Out.push(Palantir::dataPacketOut{buff, Palantir::E_JSON_MESSAGE ::FOUND, in->expac});
+            if(auto buff = CachePtr->Interact(in.value()))
+                QueuePtr->Out.push(Palantir::dataPacketOut{buff.value(), Palantir::E_JSON_MESSAGE ::FOUND, in->expac});
             else
                 Scraper(in.value(), QueuePtr);
-        }
 
         /* Send loop */
         if(auto in = QueuePtr->Out.pop())
