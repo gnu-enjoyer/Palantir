@@ -22,23 +22,21 @@ Dispatcher::Dispatcher() {
 Dispatcher::~Dispatcher() {
 }
 
+void Dispatcher::NetPoll(){
+    SocketPtr->Poll(QueuePtr);
+}
+
 void Dispatcher::Start(bool blocking) {
     if (!SocketPtr || !CachePtr) throw std::runtime_error("Error starting dispatcher: IPC socket or Redis cache not initialised");
 
     //don't wake the sleeper:
-    std::jthread netLoop(
-            [this] {
-                SocketPtr->Poll(QueuePtr);
-            });
+    std::jthread(
+            &Dispatcher::NetPoll, this
+    ).detach();
 
-    netLoop.detach();
-
-    std::jthread scrapeLoop(
-            [this] {
-                Poll();
-            });
-
-    blocking ? scrapeLoop.join() : scrapeLoop.detach();
+    blocking ?
+    std::jthread(&Dispatcher::Poll, this).join() :
+    std::jthread(&Dispatcher::Poll, this).detach();
 }
 
 [[noreturn]] void Dispatcher::Poll() {
@@ -46,7 +44,7 @@ void Dispatcher::Start(bool blocking) {
     {
         if(auto in = QueuePtr->In.pop())
             if(auto buff = CachePtr->Interact(in.value()))
-                QueuePtr->Out.push(Palantir::dataPacketOut{buff.value(), Palantir::E_JSON_MESSAGE ::FOUND, in->expac});
+                QueuePtr->Out.emplace(Palantir::dataPacketOut{buff.value(), Palantir::E_JSON_MESSAGE ::FOUND, in->expac});
             else
                 Scraper(in.value(), QueuePtr);
 

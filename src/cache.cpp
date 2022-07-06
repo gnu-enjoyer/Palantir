@@ -36,7 +36,7 @@ Cache::~Cache() {
 
 std::optional<std::string> Cache::Interact(const Palantir::dataPacketIn &In, bool query) {
 
-    redisQuery g{redisSharedPtr, In};
+    redisQuery g{redisSharedPtr, std::move(In)};
 
     return g.Process(query) ? g.buffer : std::optional<std::string>();
 }

@@ -13,31 +13,28 @@ namespace Palantir {
 
     template<typename T>
     class mutexQueue {
-
         std::queue<T> queue;
         mutable std::mutex mutex;
 
     public:
-
         size_t size() const {
             std::scoped_lock lock(mutex);
             return queue.size();
         }
 
+        void emplace(const T &&item){
+            std::scoped_lock lock(mutex);
+            queue.template emplace(std::move(item));
+        };
+
         std::optional<T> pop() {
             std::scoped_lock lock(mutex);
             if (queue.empty()) { return {}; }
 
-            T tmp = queue.front();
+            T tmp = std::move(queue.front());
             queue.pop();
             return tmp;
         }
-
-        void push(const T &item) {
-            std::scoped_lock lock(mutex);
-            queue.push(item);
-        }
-
     };
 
     enum class E_INPUT : int {
@@ -59,22 +56,19 @@ namespace Palantir {
         NOT_FOUND
     };
 
-    struct dataPacketIn {
 
+    struct dataPacketIn {
         int id;
         E_INPUT type = E_INPUT::PING;
         E_EXPANSION expac = E_EXPANSION::CLASSIC;
-
     };
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(dataPacketIn, id, type, expac)
 
     struct dataPacketOut {
-
         std::string data;
         E_JSON_MESSAGE status = E_JSON_MESSAGE::ERROR;
         E_EXPANSION expac = E_EXPANSION::CLASSIC;
-
     };
 
     NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(dataPacketOut, data, status, expac)

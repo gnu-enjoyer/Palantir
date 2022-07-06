@@ -16,6 +16,8 @@ class Dispatcher {
 
     [[noreturn]] void Poll();
 
+    void NetPoll();
+
 public:
     void Start(bool blocking=true);
 

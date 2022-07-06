@@ -41,7 +41,7 @@ void Scraper::ParseXML(const std::string& str) {
 
     pugi::xml_parse_result res = pugi::xml_document{}.load_string(str.c_str());
 
-    res.status == pugi::status_ok ? sharedPtr->Out.push(
+    res.status == pugi::status_ok ? sharedPtr->Out.emplace(
             Palantir::dataPacketOut{
                 "TODO: IMPLEMENT"
             }
@@ -50,7 +50,7 @@ void Scraper::ParseXML(const std::string& str) {
 
 void Scraper::SendError() {
 
-    sharedPtr->Out.push(
+    sharedPtr->Out.emplace(
             Palantir::dataPacketOut{"ERROR"}
     );
     //Log error

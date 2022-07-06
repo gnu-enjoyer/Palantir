@@ -64,7 +64,7 @@ void Socket::Poll(std::shared_ptr<Palantir::IPCQueue> SharedPtr) {
             /* Recv Loop */
             if ((incoming > 1) && (incoming <= 128)) {
                 try {
-                    SharedPtr->In.push(nlohmann::json::parse(ibuff));
+                    SharedPtr->In.emplace(nlohmann::json::parse(ibuff));
                 } catch (...) { SendJSON(Palantir::dataPacketOut{}); }
             }
 
